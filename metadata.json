@@ -1,0 +1,6 @@
+{
+  "name": "CoreTerm CLI",
+  "description": "Interactive System Architecture, File Structure, and Technology Stack analysis for CoreTerm CLI Android Terminal Emulator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
