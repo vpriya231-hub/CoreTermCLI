@@ -28,9 +28,18 @@ import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.draw.alpha
 import com.coreterm.cli.session.TerminalSession
 
 /**
@@ -97,12 +106,55 @@ fun TerminalScreenContainer(
     var isCtrlPressed by remember { mutableStateOf(false) }
     var isAltPressed by remember { mutableStateOf(false) }
     var isFnPressed by remember { mutableStateOf(false) }
+    var textFieldValue by remember { mutableStateOf(TextFieldValue("")) }
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(colorScheme.background)
     ) {
+        // Invisible input bridge to drive soft keyboard character processing
+        Box(
+            modifier = Modifier.size(0.dp)
+        ) {
+            BasicTextField(
+                value = textFieldValue,
+                onValueChange = { newValue ->
+                    val prevText = textFieldValue.text
+                    val newText = newValue.text
+                    if (newText.length > prevText.length) {
+                        val addedText = newText.substring(prevText.length)
+                        for (i in 0 until addedText.length) {
+                            val char = addedText[i]
+                            if (char == '\n') {
+                                session.write(byteArrayOf(13)) // Send CR (Enter) \r
+                            } else {
+                                session.write(char.toString().toByteArray(Charsets.UTF_8))
+                            }
+                        }
+                    } else if (newText.length < prevText.length) {
+                        session.write(byteArrayOf(127)) // ASCII standard DEL / Backspace
+                    }
+                    textFieldValue = TextFieldValue("")
+                },
+                modifier = Modifier
+                    .size(1.dp)
+                    .alpha(0f)
+                    .focusRequester(focusRequester),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    autoCorrect = false,
+                    keyboardType = KeyboardType.Ascii,
+                    imeAction = ImeAction.None
+                ),
+                keyboardActions = KeyboardActions(
+                    onAny = {
+                        session.write(byteArrayOf(13)) // Enter key: \r
+                    }
+                )
+            )
+        }
+
         // 1. Interactive Canvas Terminal (Occupies maximum available area)
         TerminalCanvas(
             session = session,
@@ -115,7 +167,6 @@ fun TerminalScreenContainer(
             },
             modifier = Modifier
                 .weight(1f)
-                .focusRequester(focusRequester)
                 .clickable {
                     focusRequester.requestFocus()
                     // Proactively request the system soft keyboard to manifest

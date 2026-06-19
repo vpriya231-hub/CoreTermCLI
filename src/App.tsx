@@ -742,7 +742,7 @@ class TerminalSession(
                                     {
                                       name: 'TerminalView.kt',
                                       type: 'file',
-                                      summary: 'Displays letters precisely and acts as keyboard interface interceptor.',
+                                      summary: 'Displays character grids at high refresh rates, managing IME soft keyboard actions.',
                                       content: 'Low-latency canvas implementation supporting dynamic row wrapping, blinking, and selection.',
                                       fullCode: `package com.coreterm.cli.ui
 
